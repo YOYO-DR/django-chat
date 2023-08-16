@@ -1,1 +1,1 @@
-# django-chat
+# Chat en tiempo real con Django
