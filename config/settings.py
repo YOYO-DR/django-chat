@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 
 from config.db import MYSQL_AZURE, MYSQL_LOCAL
+from config.dictChannels import CHANNELS_AZURE, CHANNELS_LOCAL
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -28,7 +29,7 @@ SECRET_KEY = 'django-insecure-fi+-qw(5=ib=$nh*(75-wo%g&7uv6bg*5llgvpq*#uq4$#i=9e
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["127.0.0.1",'192.168.110.39']
 
 
 # Application definition
@@ -128,16 +129,4 @@ STATICFILES_DIRS=[os.path.join(BASE_DIR, 'static')]
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-# CHANNEL_LAYERS = {
-#     'default': {
-#         'BACKEND': 'channels_redis.core.RedisChannelLayer',
-#         'CONFIG': {
-#             'hosts': [(os.environ.get("REDISHOST"), int(os.environ.get("REDISPORT")))],
-#         },
-#     },
-# }
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer"
-    }
-}
+CHANNEL_LAYERS = CHANNELS_AZURE

@@ -36,7 +36,7 @@
         // Crear un elemento de mensaje y agregarlo al contenedor de mensajes
         var messageElement = document.createElement('div');
         messageElement.classList.add('message');
-        messageElement.innerHTML = '<p><strong>Usuario:</strong> ' + message + '</p>';
+        messageElement.innerHTML = '<div><strong style="display:block;">Usuario</strong><span>' + message + '</span></div>';
         chatMessages.appendChild(messageElement);
 
         // Desplazarse hacia abajo para mostrar el mensaje más reciente

@@ -26,7 +26,7 @@
     margin-bottom: 10px;
 }
 
-.message p {
+.message div {
     background: #007bff;
     color: #fff;
     border-radius: 10px;
