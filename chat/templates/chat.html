@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<h1>Chat</h1>
+<div class="chat-container">
+    <div class="chat-header">
+        <h2>Chat</h2>
+    </div>
+    <div class="chat-messages">
+    </div>
+    <div class="chat-input">
+        <input type="text" placeholder="Escribe un mensaje...">
+        <button>Enviar</button>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block js %}
+     <script>
+      // Web sockect
+      var ws_scheme = window.location.protocol == "https:" ? "wss" : "ws";
+         var chatSocket = new WebSocket(
+             ws_scheme + '://' + window.location.host +
+             '/ws/chat/{{ room_name }}/'
+         );
+      // Obtener referencia al contenedor de mensajes del chat
+    var chatMessages = document.querySelector('.chat-messages');
+
+    // Agregar un evento de mensaje recibido al WebSocket
+    chatSocket.onmessage = function(e) {
+        var data = JSON.parse(e.data);
+        var message = data['message'];
+
+        // Crear un elemento de mensaje y agregarlo al contenedor de mensajes
+        var messageElement = document.createElement('div');
+        messageElement.classList.add('message');
+        messageElement.innerHTML = '<p><strong>Usuario:</strong> ' + message + '</p>';
+        chatMessages.appendChild(messageElement);
+
+        // Desplazarse hacia abajo para mostrar el mensaje más reciente
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    };
+    // Obtener referencias a los elementos del chat
+    var chatInput = document.querySelector('.chat-input input');
+    var sendButton = document.querySelector('.chat-input button');
+
+    // Agregar un evento de clic al botón de enviar
+    sendButton.addEventListener('click', function() {
+        var message = chatInput.value.trim();
+        if (message !== '') {
+            // Enviar el mensaje al WebSocket
+            chatSocket.send(JSON.stringify({
+                'message': message
+            }));
+
+            // Limpiar el campo de entrada del chat
+            chatInput.value = '';
+        }
+    });
+
+    // Agregar un evento de tecla presionada al campo de entrada del chat
+    chatInput.addEventListener('keypress', function(event) {
+        if (event.keyCode === 13 || event.which === 13) {
+            // Obtener el mensaje del campo de entrada
+            var message = chatInput.value.trim();
+            if (message !== '') {
+                // Enviar el mensaje al WebSocket
+                chatSocket.send(JSON.stringify({
+                    'message': message
+                }));
+
+                // Limpiar el campo de entrada del chat
+                chatInput.value = '';
+            }
+        }
+    });
+</script>
+
+
+{% endblock js %}
