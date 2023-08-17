@@ -76,6 +76,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 # configuracion channels
 ASGI_APPLICATION = 'config.asgi.application'
+CHANNEL_LAYERS = CHANNELS_AZURE
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -129,4 +130,3 @@ STATICFILES_DIRS=[os.path.join(BASE_DIR, 'static')]
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-CHANNEL_LAYERS = CHANNELS_LOCAL
