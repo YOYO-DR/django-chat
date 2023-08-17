@@ -23,7 +23,7 @@
       var ws_scheme = window.location.protocol == "https:" ? "wss" : "ws";
          var chatSocket = new WebSocket(
              ws_scheme + '://' + window.location.host +
-             '/ws/chat/{{ room_name }}/'
+             '/'+ws_scheme+'/chat/{{ room_name }}/'
          );
       // Obtener referencia al contenedor de mensajes del chat
     var chatMessages = document.querySelector('.chat-messages');
