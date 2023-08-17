@@ -18,7 +18,8 @@ settings_module = 'config.production' if 'WEBSITE_HOSTNAME' in os.environ else '
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', settings_module)
 
 application = ProtocolTypeRouter({
-    "http": get_asgi_application(),
+    # si esta desplegado o no, pongo el protocolo
+    "https" if 'WEBSITE_HOSTNAME' in os.environ else "http": get_asgi_application(),
     "websocket": AuthMiddlewareStack(
         URLRouter(
             chat.routing.websocket_urlpatterns
