@@ -1,7 +1,7 @@
 # gunicorn_config.py
 
 # Número de procesos de trabajo para manejar las solicitudes
-workers = 2
+workers = 3
 
 # Clase de trabajador a utilizar
 worker_class = 'uvicorn.workers.UvicornWorker'
