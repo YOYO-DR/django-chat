@@ -10,8 +10,8 @@
     <div class="chat-messages">
     </div>
     <div class="chat-input">
-        <input disabled type="text" placeholder="Escribe un mensaje...">
-        <button type="button" disabled>Enviar</button>
+        <input  type="text" placeholder="Escribe un mensaje...">
+        <button type="button" >Enviar</button>
     </div>
 </div>
 </div>
@@ -25,20 +25,19 @@
       }
       // Web sockect
       var ws_scheme = window.location.protocol == "https:" ? "wss" : "ws";
-      var chatSocket=null;
-      try{
-        chatSocket = new WebSocket(
+      var chatSocketVali=null;
+      
+        var chatSocket = new WebSocket(
              ws_scheme + '://' + window.location.host +
              '/ws/chat/{{ room_name }}/'
       );
-      }catch (e){
-        chatSocket=null
-        alert("No se puedo conectar al chat, recarga la pagina")
-      }
       
+        chatSocket.onerror=function(e){
+          alert("No se puedo conectar al chat, recarga la pagina")
+        }
+
       // Obtener referencia al contenedor de mensajes del chat
     var chatMessages = document.querySelector('.chat-messages');
-if (chatSocket!=null){
     // Agregar un evento de mensaje recibido al WebSocket
     chatSocket.onmessage = function(e) {
         var data = JSON.parse(e.data);
@@ -71,8 +70,6 @@ if (chatSocket!=null){
     // Obtener referencias a los elementos del chat
     var chatInput = document.querySelector('.chat-input input');
     var sendButton = document.querySelector('.chat-input button');
-    chatInput.disabled=false;
-    sendButton.disabled=false;
 
     // Agregar un evento de clic al botón de enviar
     sendButton.addEventListener('click', function() {
@@ -106,7 +103,7 @@ if (chatSocket!=null){
             }
         }
     });
-    }
+    
 </script>
 
 
