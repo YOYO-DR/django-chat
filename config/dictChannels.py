@@ -3,7 +3,7 @@ CHANNELS_AZURE={
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': [(os.environ.get("REDISHOST"), int(os.environ.get("REDISPORT")))],
+            'hosts': [(os.environ.get("REDISHOST"), os.environ.get("REDISPORT"))],
         },
     },
 }

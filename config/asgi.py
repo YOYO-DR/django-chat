@@ -11,7 +11,7 @@ import os
 from channels.auth import AuthMiddlewareStack
 from channels.routing import ProtocolTypeRouter,URLRouter
 from django.core.asgi import get_asgi_application
-import chat.routing
+import apps.chat.routing
 
 
 settings_module = 'config.production' if 'WEBSITE_HOSTNAME' in os.environ else 'config.settings'
@@ -22,7 +22,7 @@ application = ProtocolTypeRouter({
     "https" if 'WEBSITE_HOSTNAME' in os.environ else "http": get_asgi_application(),
     "websocket": AuthMiddlewareStack(
         URLRouter(
-            chat.routing.websocket_urlpatterns
+            apps.chat.routing.websocket_urlpatterns
         )
     ),
 })

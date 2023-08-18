@@ -1,0 +1,13 @@
+librerias para linux para el despliegue
+# Required for deploying to Azure (uvicorn asgi)
+uvicorn==0.23.2
+uvloop==0.17.0
+httptools==0.6.0
+websockets==11.0.3
+
+# toca crear el archivo de gunicorn_config.py y poner la configuración de asgi con uvicorn, se pone en:
+1. abre la app de Azure
+2. seccion configuración, luego en configuración
+3. en configuracion general o "General settings"
+4. en Startup Command se pone: gunicorn -c gunicorn_config.py config.asgi:application
+donde gunicorn_config es el archivo de configuracionque creamos, lo ponemos al nivel del manage.py
