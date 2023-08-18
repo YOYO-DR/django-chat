@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     "apps.chat",
     'apps.user',
+    "widget_tweaks"
 ]
 
 MIDDLEWARE = [
@@ -130,4 +131,9 @@ STATICFILES_DIRS=[os.path.join(BASE_DIR, 'static')]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+#login
+LOGIN_REDIRECT_URL = 'inicio'
+LOGIN_URL="login"
 
+#logout
+LOGOUT_REDIRECT_URL = 'login'

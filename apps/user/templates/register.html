@@ -1,0 +1,7 @@
+{% extends 'form.html' %}
+{% block btn %}
+<div class="d-flex flex-column">
+<button type="submit" class="btn btn-success">Registrarse</button>
+<a class="link" href="{% url 'login' %}">Inicia sesión</a>
+</div>
+{% endblock btn %}
