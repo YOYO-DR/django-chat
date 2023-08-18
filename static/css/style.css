@@ -1,5 +1,4 @@
 .chat-container {
-    width: 400px;
     border-radius: 15px;
     box-shadow: 0 0 10px rgba(0,0,0,0.2);
     font-family: 'Arial', sans-serif;
@@ -26,11 +25,21 @@
     margin-bottom: 10px;
 }
 
-.message div {
-    background: #007bff;
+.message .no-local, 
+.message .local {
     color: #fff;
     border-radius: 10px;
-    padding: 5px;
+    padding: 5px 10px;
+    word-wrap: break-word;
+    width: min-content;
+    max-width: 80%;
+}
+.message .no-local{
+  background: gray;
+}
+
+.message .local{
+  background: #007bff;
 }
 
 .chat-input {
