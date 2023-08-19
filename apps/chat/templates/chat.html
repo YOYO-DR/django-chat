@@ -18,6 +18,9 @@
 {% endblock content %}
 
 {% block js %}
+    <!-- reconnecting websocket lib -->
+    <!-- Administra mejor las reconecciones del websocket -->
+    <script src="{% static 'libs/reconnecting-websocket/js/reconnecting-websocket.min.js' %}"></script>
      <script>
       // poner en mayuscula la primera letra de un string
       function toTitle(str) {
@@ -26,15 +29,15 @@
       // Web sockect
       var ws_scheme = window.location.protocol == "https:" ? "wss" : "ws";
       
-        var chatSocket = new WebSocket(
-             ws_scheme + '://' + window.location.host +
-             '/ws/chat/{{ room_name }}/'
-      );
+        var chatSocket = new ReconnectingWebSocket(
+          ws_scheme + '://' + window.location.host +
+          '/ws/chat/{{ room_name }}/'
+          );
       
         chatSocket.onerror=function(e){
           alert("No se puedo conectar al chat, recarga la pagina")
         }
-
+        
       // Obtener referencia al contenedor de mensajes del chat
     var chatMessages = document.querySelector('.chat-messages');
     // Agregar un evento de mensaje recibido al WebSocket
