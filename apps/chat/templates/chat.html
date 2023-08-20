@@ -34,9 +34,6 @@
           '/ws/chat/{{ room_name }}/'
           );
       
-        chatSocket.onerror=function(e){
-          alert("No se puedo conectar al chat, recarga la pagina")
-        }
         
       // Obtener referencia al contenedor de mensajes del chat
     var chatMessages = document.querySelector('.chat-messages');
