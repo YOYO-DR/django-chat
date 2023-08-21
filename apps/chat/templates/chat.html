@@ -8,24 +8,40 @@
         <h2>Chat</h2>
     </div>
     <div class="chat-messages">
-      {% for msj in historial %}
-        <div class="message">
-          {% if msj.user.username == request.user.username %}
-          <div class="local" style="margin-left:auto; text">
-            <span>{{msj.message}}</span>
+      {% for date in historial %}
+        <div class="time-message text-center"><i>{{date.dia}}</i></div>
+        {% for msj in date.registros %}
+          <div class="message">
+            {% if msj.user.username == request.user.username %}
+            <div class="local" style="margin-left:auto; text">
+              <div class="d-flex flex-column">
+              <span class="align-self-end t-wordwrap">
+                {{msj.message}}
+              </span>
+              <small class="align-self-end">
+              {{msj.datetime_format}}
+              </small>
+              </div>
+            </div>
+            {% else %}
+            <div class="no-local" style="margin-right:auto;">
+              <strong style="display:block;">
+                {{msj.user.username|title}}
+              </strong>
+              <div class="d-flex flex-column">
+              <span class="align-self-start t-wordwrap">
+                {{msj.message}}
+              </span>
+              <small>
+             {{msj.datetime_format}}
+              </small>
+              </div>
+            </div>
+            {% endif %}
           </div>
-          {% else %}
-          <div class="no-local" style="margin-right:auto;">
-            <strong style="display:block;">
-              {{msj.user.username|title}}
-            </strong>
-            <span>
-              {{msj.message}}
-            </span>
-          </div>
-          {% endif %}
-        </div>
+        {% endfor %}
       {% endfor %}
+      
     </div>
     <div class="chat-input">
         <input  type="text" placeholder="Escribe un mensaje...">
@@ -70,35 +86,39 @@
         if (user==null){
           user="Anonimo"
         }
-        //enviar peticion para guardar el mensaje
+       
         //obtengo el datetime actual
         const c = new Date(); // Obtiene la fecha y hora actual
-        //creo el formato requerido para guardarlo: 'YYYY-MM-DD HH:MM:SS'
-        let date_time= `${c.getFullYear()}-${c.getMonth()+1}-${c.getDate()} ${c.getHours()}:${c.getMinutes()}:${c.getSeconds()}`
-        fetch(window.location.pathname,{
-          method:"POST",
-          headers:{
-            "X-CSRFToken":"{{csrf_token}}"
-          },
-          body:JSON.stringify({message:message,
-            username:user,
-            datetime:date_time})
-        })
-        .then(response => response.json())
-        .then(data => {
-          if ("error" in data){
-            console.error(data.error)
-          }
-        })
         
+        //formateo la fecha para que salga como "2:25 PM"
+        let hours = c.getHours();
+        let minutes = c.getMinutes();
+        let ampm = hours >= 12 ? 'PM' : 'AM';
+
+        hours = hours % 12;
+        hours = hours ? hours : 12; // la hora '0' debería ser '12'
+        minutes = minutes < 10 ? '0'+minutes : minutes;
+
+        let timeFormat = hours + ':' + minutes + ' ' + ampm;
 
         // Crear un elemento de mensaje y agregarlo al contenedor de mensajes
         var messageElement = document.createElement('div');
         messageElement.classList.add('message');
         if (user=="{{request.user.username}}"){
-          messageElement.innerHTML = `<div class="local" style="margin-left:auto; text"><span>${message}</span></div>`;
+          messageElement.innerHTML = `<div class="local" style="margin-left:auto;">
+            <div class="d-flex flex-column">
+              <span class="align-self-end t-wordwrap">${message}</span>
+              <span>${timeFormat}</span>
+            </div>
+          </div>`;
         }else{
-          messageElement.innerHTML = `<div class="no-local" style="margin-right:auto;"><strong style="display:block;">${toTitle(user)}</strong><span>${message}</span></div>`;
+          messageElement.innerHTML = `<div class="no-local" style="margin-right:auto;">
+            <strong style="display:block;">${toTitle(user)}</strong>
+            <div class="d-flex flex-column">
+              <span class="align-self-start t-wordwrap">${message}</span>
+              <span>${timeFormat}</span>
+            </div>
+          </div>`;
         }
 
         

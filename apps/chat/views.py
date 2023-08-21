@@ -31,6 +31,12 @@ class InicioView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["room_name"] = "social"
-        context['historial']=[message.toJSON() for message in HistorialChat.objects.all().order_by("datetime")]
+
+        historial=[]
+        for i in HistorialChat.diasRegistros():
+          registros=[j.toJSON() for j in HistorialChat.objects.filter(datetime__date=i).order_by("datetime")]
+
+          historial.append({"dia":i,"registros":registros})
+        context['historial']=historial
         return context
     
