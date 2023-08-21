@@ -8,6 +8,24 @@
         <h2>Chat</h2>
     </div>
     <div class="chat-messages">
+      {% for msj in historial %}
+        <div class="message">
+          {% if msj.user.username == request.user.username %}
+          <div class="local" style="margin-left:auto; text">
+            <span>{{msj.message}}</span>
+          </div>
+          {% else %}
+          <div class="no-local" style="margin-right:auto;">
+            <strong style="display:block;">
+              {{msj.user.username|title}}
+            </strong>
+            <span>
+              {{msj.message}}
+            </span>
+          </div>
+          {% endif %}
+        </div>
+      {% endfor %}
     </div>
     <div class="chat-input">
         <input  type="text" placeholder="Escribe un mensaje...">
@@ -51,6 +69,27 @@
         if (user==null){
           user="Anonimo"
         }
+        //enviar peticion para guardar el mensaje
+        //obtengo el datetime actual
+        const c = new Date(); // Obtiene la fecha y hora actual
+        //creo el formato requerido para guardarlo: 'YYYY-MM-DD HH:MM:SS'
+        let date_time= `${c.getFullYear()}-${c.getMonth()+1}-${c.getDate()} ${c.getHours()}:${c.getMinutes()}:${c.getSeconds()}`
+        fetch(window.location.pathname,{
+          method:"POST",
+          headers:{
+            "X-CSRFToken":"{{csrf_token}}"
+          },
+          body:JSON.stringify({message:message,
+            username:user,
+            datetime:date_time})
+        })
+        .then(response => response.json())
+        .then(data => {
+          if ("error" in data){
+            console.error(data.error)
+          }
+        })
+        
 
         // Crear un elemento de mensaje y agregarlo al contenedor de mensajes
         var messageElement = document.createElement('div');
@@ -58,8 +97,9 @@
         if (user=="{{request.user.username}}"){
           messageElement.innerHTML = `<div class="local" style="margin-left:auto; text"><span>${message}</span></div>`;
         }else{
-          messageElement.innerHTML = `<div class="no-local" style="margin-right:auto; text"><strong style="display:block;">${toTitle(user)}</strong><span>${message}</span></div>`;
+          messageElement.innerHTML = `<div class="no-local" style="margin-right:auto;"><strong style="display:block;">${toTitle(user)}</strong><span>${message}</span></div>`;
         }
+
         
         chatMessages.appendChild(messageElement);
 
