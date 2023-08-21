@@ -1,5 +1,7 @@
-import json
 from channels.generic.websocket import AsyncWebsocketConsumer
+from channels.db import database_sync_to_async
+
+import json
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -36,6 +38,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 "user":user
             }
         )
+        # ejecuto con el await la funcion que cree
+        await self.post_message(text_data_json)
 
     # Recibir mensaje desde el grupo
     async def chat_message(self, event):
@@ -47,3 +51,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'message': message,
             "user":user
         }))
+    # convierte lo que este dentro sobre bd o rl orm, en operaciones asincronas
+    @database_sync_to_async
+    def post_message(self, data):
+        try:
+          from django.contrib.auth.models import User
+          from apps.chat.models import HistorialChat
+          user = User.objects.get(username=data['user'])
+          HistorialChat.objects.create(user=user,message=data['message'])
+        except Exception as e:
+            # si sale algun error, o el error de que no han cargado las aplicaciones, lo paso para que cargue todo normal
+            print(str(e))
