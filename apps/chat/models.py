@@ -1,7 +1,10 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.forms import model_to_dict
-from django.db.models.functions import TruncDate
+from django.utils import timezone
+
+from apps.chat.function import timezone_now_cre
+from config.settings import TIME_ZONE
 
 class HistorialChat(models.Model):
   user=models.ForeignKey(User,on_delete=models.CASCADE,verbose_name="Usuario")
@@ -16,7 +19,8 @@ class HistorialChat(models.Model):
     item=model_to_dict(self)
     item['user'] = {"id":self.user.id, "username":self.user.username}
     # agrego una key para no modificar el original, y le aplico un formato para que aparezca de 0 a 12 y con su pm y am
-    item['datetime_format']=self.datetime.strftime("%I:%M %p")
+    item['datetime']=timezone_now_cre(self.datetime,TIME_ZONE)
+    item['datetime_format']=item['datetime'].strftime("%I:%M %p").lstrip("0")
     return item
   
   def diasRegistros():
@@ -29,11 +33,11 @@ class HistorialChat(models.Model):
 
     # otra forma para poder limitar a los ultimos dias requeridos, porque despues de aplicar un [:] (slice), no se puede utilizar distinct()
     ultimosDias=[registro.datetime.date() for registro in HistorialChat.objects.order_by('-datetime')[:10]]
+
     # quitar los repetidos
     dias=list(set(ultimosDias))
+
     # retornarlo ordenado
     dias.sort()
-    return dias
-    
 
     return dias

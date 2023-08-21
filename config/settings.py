@@ -78,7 +78,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 # configuracion channels
 ASGI_APPLICATION = 'config.asgi.application'
-CHANNEL_LAYERS = CHANNELS_AZURE
+CHANNEL_LAYERS = CHANNELS_LOCAL
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases

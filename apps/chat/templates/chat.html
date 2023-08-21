@@ -9,7 +9,7 @@
     </div>
     <div class="chat-messages">
       {% for date in historial %}
-        <div class="time-message text-center"><i>{{date.dia}}</i></div>
+        <div class="time-message text-center"><i>{{date.dia|date}}</i></div>
         {% for msj in date.registros %}
           <div class="message">
             {% if msj.user.username == request.user.username %}
@@ -108,7 +108,7 @@
           messageElement.innerHTML = `<div class="local" style="margin-left:auto;">
             <div class="d-flex flex-column">
               <span class="align-self-end t-wordwrap">${message}</span>
-              <span>${timeFormat}</span>
+              <small>${timeFormat}</small>
             </div>
           </div>`;
         }else{
@@ -116,7 +116,7 @@
             <strong style="display:block;">${toTitle(user)}</strong>
             <div class="d-flex flex-column">
               <span class="align-self-start t-wordwrap">${message}</span>
-              <span>${timeFormat}</span>
+              <small>${timeFormat}</small>
             </div>
           </div>`;
         }
