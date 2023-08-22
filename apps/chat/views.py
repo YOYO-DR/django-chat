@@ -14,9 +14,12 @@ class InicioView(TemplateView):
         context = super().get_context_data(**kwargs)
         context["room_name"] = "social"
         historial=[]
-        for i in HistorialChat.diasRegistros():
+        historialDiasFechas=HistorialChat.diasRegistros()
+        for i in historialDiasFechas[0]:
           # filtro la fecha asi, porque podria hacerlo datetime__date=i, pero como cambie la zona horaria a America/Bogota, filtro la busqueda como string
-          registros=[j.toJSON() for j in HistorialChat.objects.filter(datetime__icontains=i).order_by("datetime")]
+          # en la funcion diasRegistros, obtengo los registros, les modifico su datetime al que quiero, y retorno los dias sin repetirce y los registros modificados
+          #aqui en el for recorreo los registros y luego pregunto si la fecha (yyyy-mm-dd) se encuenta en la fecha del objeto en cuestion y si lo esta, lo guarda, de lo contrario, no
+          registros=[j.toJSON() for j  in  historialDiasFechas[1] if str(i) in str(j.datetime.date())]
           historial.append({"dia":i,"registros":registros})
         context['historial']=historial
         return context
