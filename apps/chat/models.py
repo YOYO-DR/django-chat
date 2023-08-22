@@ -4,7 +4,7 @@ from django.forms import model_to_dict
 from django.utils import timezone
 
 from apps.chat.function import timezone_now_cre
-from config.settings import TIME_ZONE
+from config.settings import CHAT_CANT_MSJ, TIME_ZONE
 
 class HistorialChat(models.Model):
   user=models.ForeignKey(User,on_delete=models.CASCADE,verbose_name="Usuario")
@@ -34,9 +34,11 @@ class HistorialChat(models.Model):
     # otra forma para poder limitar a los ultimos dias requeridos, porque despues de aplicar un [:] (slice), no se puede utilizar distinct()
     
     #obtengo los dias que quiero, y a cada uno le cambio su datetime al que quiero
-    fechas=HistorialChat.objects.order_by('datetime')[10:]
+    fechas=HistorialChat.objects.order_by('-datetime')[:CHAT_CANT_MSJ]
+    fechasArray=[]
     for fecha in fechas:
       fecha.datetime=timezone_now_cre(fecha.datetime,TIME_ZONE)
+      fechasArray.append(fecha)
     ultimosDias=[registro.datetime.date() for registro in fechas]
 
     # quitar los repetidos
@@ -45,4 +47,7 @@ class HistorialChat(models.Model):
     # retornarlo ordenado
     dias.sort()
 
-    return [dias,fechas]
+    #las pongo en un arreglo porque no puedo aplicar el reverse nativo del queryset porque hize la consulta con un slice, entonces los agrego en un arreglo para voltearlo al orden normal
+    fechasArray.reverse()
+
+    return [dias,fechasArray]

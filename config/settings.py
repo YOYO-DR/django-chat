@@ -83,7 +83,7 @@ CHANNEL_LAYERS = CHANNELS_LOCAL
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = MYSQL_LOCAL
+DATABASES = MYSQL_AZURE
 
 
 # Password validation
@@ -137,3 +137,6 @@ LOGIN_URL="login"
 
 #logout
 LOGOUT_REDIRECT_URL = 'login'
+
+#chat cantidad de mensajes (int)
+CHAT_CANT_MSJ=20
