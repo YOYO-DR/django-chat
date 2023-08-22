@@ -32,7 +32,12 @@ class HistorialChat(models.Model):
     #dias= HistorialChat.objects.annotate(date_only=TruncDate('datetime')).values('date_only').distinct().order_by("date_only")
 
     # otra forma para poder limitar a los ultimos dias requeridos, porque despues de aplicar un [:] (slice), no se puede utilizar distinct()
-    ultimosDias=[registro.datetime.date() for registro in HistorialChat.objects.order_by('-datetime')[:10]]
+    
+    #obtengo los dias que quiero, y a cada uno le cambio su datetime al que quiero
+    fechas=HistorialChat.objects.order_by('-datetime')[:10]
+    for fecha in fechas:
+      fecha.datetime=timezone_now_cre(fecha.datetime,TIME_ZONE)
+    ultimosDias=[registro.datetime.date() for registro in fechas]
 
     # quitar los repetidos
     dias=list(set(ultimosDias))
