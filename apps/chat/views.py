@@ -19,7 +19,7 @@ class InicioView(TemplateView):
           # filtro la fecha asi, porque podria hacerlo datetime__date=i, pero como cambie la zona horaria a America/Bogota, filtro la busqueda como string
           # en la funcion diasRegistros, obtengo los registros, les modifico su datetime al que quiero, y retorno los dias sin repetirce y los registros modificados
           #aqui en el for recorreo los registros y luego pregunto si la fecha (yyyy-mm-dd) se encuenta en la fecha del objeto en cuestion y si lo esta, lo guarda, de lo contrario, no
-          registros=[j.toJSON() for j  in  historialDiasFechas[1] if str(i) in str(j.datetime.date())]
+          registros=[j.toJSON() for j in historialDiasFechas[1] if str(i) in str(j.datetime.date())]
           historial.append({"dia":i,"registros":registros})
         context['historial']=historial
         return context

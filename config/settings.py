@@ -83,7 +83,7 @@ CHANNEL_LAYERS = CHANNELS_LOCAL
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = MYSQL_AZURE
+DATABASES = MYSQL_LOCAL
 
 
 # Password validation
