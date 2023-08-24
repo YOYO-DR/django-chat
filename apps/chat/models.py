@@ -1,7 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.forms import model_to_dict
-from django.utils import timezone
 
 from apps.chat.function import timezone_now_cre
 from config.settings import CHAT_CANT_MSJ, TIME_ZONE

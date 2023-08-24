@@ -79,6 +79,8 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # configuracion channels
 ASGI_APPLICATION = 'config.asgi.application'
 CHANNEL_LAYERS = CHANNELS_LOCAL
+#chat cantidad de mensajes (int)
+CHAT_CANT_MSJ=20
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -137,6 +139,3 @@ LOGIN_URL="login"
 
 #logout
 LOGOUT_REDIRECT_URL = 'login'
-
-#chat cantidad de mensajes (int)
-CHAT_CANT_MSJ=20

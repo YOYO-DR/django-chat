@@ -1,4 +1,4 @@
-import pytz,datetime
+import pytz
 
 # para que se ejecute solo cuando django lo requiera, se lo paso como parametro
 def timezone_now_cre(fecha,zona):

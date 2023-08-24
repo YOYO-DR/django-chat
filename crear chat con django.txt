@@ -1,0 +1,592 @@
+1. instalar estos requerimientos (los que utilice yo), hacer la instalacion con pip install tal tal tal, y decir que channels sea la v 3
+asgiref==3.7.2
+async-timeout==4.0.3
+attrs==23.1.0
+autobahn==23.6.2
+Automat==22.10.0
+cffi==1.15.1
+channels==3.0.5 # ! no instalar la 4
+channels-redis==4.1.0 # !
+constantly==15.1.0
+cryptography==41.0.3
+daphne==3.0.2
+# !
+Django==4.2.4
+django-widget-tweaks==1.4.12
+# !
+gunicorn==21.2.0
+hyperlink==21.0.0
+idna==3.4
+incremental==22.10.0
+msgpack==1.0.5
+# ! BD
+mysqlclient==2.2.0
+packaging==23.1
+pyasn1==0.5.0
+pyasn1-modules==0.3.0
+pycparser==2.21
+pyOpenSSL==23.2.0
+# !
+python-dotenv==1.0.0
+# ! fechas
+pytz==2023.3
+# !
+redis==5.0.0
+service-identity==23.1.0
+six==1.16.0
+sqlparse==0.4.4
+Twisted==22.10.0
+# solo para windows
+twisted-iocpsupport==1.0.4 
+txaio==23.1.1
+typing_extensions==4.7.1
+tzdata==2023.3
+# !
+whitenoise==6.5.0
+zope.interface==6.0
+# Required for deploying to Azure (uvicorn asgi) estos si importante
+uvicorn==0.23.2
+# no es para windows, es para el despliegue
+uvloop==0.17.0
+httptools==0.6.0
+websockets==11.0.3
+
+2. crear app chat y ponerla en la configuracion del settings.py (INSTALLED_APPS)
+
+3. poner channels tambien en INSTALLED_APPS
+
+4. creamos una variable en el settings.py para poner la cantidad de mensajes que se quieren que se vean, en mi caso la llamare CHAT_CANT_MSJ, con el valor de 20 mensajes nomás
+# config/settings.py
+#chat cantidad de mensajes (int)
+CHAT_CANT_MSJ=20
+
+5. en la app chat creamos un archivo llamado function.py o como desee, ahi pondremos funciones que necesitemos, en este caso, para modificar la zona horaria de los registros segun como querramos
+# chat/function.py
+# en este caso la funcion es para cambiar la zona horaria de los registros, ya que vienen en UTC 0 y la quiero en America/Bogota -5
+import pytz
+
+# para que se ejecute solo cuando django lo requiera, se lo paso como parametro
+def timezone_now_cre(fecha,zona):
+  # Define la zona horaria a la que deseas convertir la fecha
+  nueva_zona_horaria = pytz.timezone(zona)
+
+  # Convierte la fecha y hora a la nueva zona horaria
+  fecha_hora_nueva = fecha.astimezone(nueva_zona_horaria)
+  return fecha_hora_nueva
+
+
+6. creamos el modelo base para guardar los mensajes del chat, importamos lo requerido
+# chat/models.py
+from django.db import models
+from django.contrib.auth.models import User
+from django.forms import model_to_dict
+
+from apps.chat.function import timezone_now_cre
+from config.settings import CHAT_CANT_MSJ, TIME_ZONE
+
+class HistorialChat(models.Model):
+  user=models.ForeignKey(User,on_delete=models.CASCADE,verbose_name="Usuario")
+  message=models.TextField(null=True, blank=True, verbose_name="Mensaje")
+  # formato: 'YYYY-MM-DD HH:MM:SS'
+  datetime=models.DateTimeField(auto_now_add=True,verbose_name="Fecha enviado")
+
+  def __str__(self):
+    return self.message
+
+  def toJSON(self):
+    item=model_to_dict(self)
+    item['user'] = {"id":self.user.id, "username":self.user.username}
+    # agrego una key para no modificar el original, y le aplico un formato para que aparezca de 0 a 12 y con su pm y am
+    item['datetime']=timezone_now_cre(self.datetime,TIME_ZONE)
+    item['datetime_format']=item['datetime'].strftime("%I:%M %p").lstrip("0")
+    return item
+  
+  def diasRegistros():
+    #obtengo los dias que quiero, y a cada uno le cambio su datetime al que quiero
+    fechas=HistorialChat.objects.order_by('-datetime')[:CHAT_CANT_MSJ]
+    fechasArray=[]
+    for fecha in fechas:
+      fecha.datetime=timezone_now_cre(fecha.datetime,TIME_ZONE)
+      fechasArray.append(fecha)
+    ultimosDias=[registro.datetime.date() for registro in fechas]
+
+    # quitar los repetidos
+    dias=list(set(ultimosDias))
+
+    # retornarlo ordenado
+    dias.sort()
+
+    #las pongo en un arreglo porque no puedo aplicar el reverse nativo del queryset porque hize la consulta con un slice, entonces los agrego en un arreglo para voltearlo al orden normal
+    fechasArray.reverse()
+
+    return [dias,fechasArray]
+
+7. lo agregamos al admin para el administrador (no olvidar el makemigrations y el migrate)
+# chat/admin.py
+from django.contrib import admin
+from .models import HistorialChat
+
+admin.site.register(HistorialChat)
+
+8. en el settings.py, activamos el asgi, lo podemos dejar debajo del WSGI (config es mi carpeta principal)
+WSGI_APPLICATION = 'config.wsgi.application'
+ASGI_APPLICATION = 'config.asgi.application'
+
+9. creamos en la carpeta de configuracion un archivo llamado dictChannels.py o como quieran llamarlo para almacenar la configuracion de los canales, en mi caso tengo 2, uno de un servidor de redis y otro utilizando el basico de django
+# config/dictChannels.py
+
+CHANNELS_AZURE={
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': ["puerto_server_redis", port_redis-int],
+        },
+    },
+}
+
+CHANNELS_LOCAL={
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
+}
+
+10. e importamos los 2 en el settings.py (esos son los 2 mios, le puse azure porque ahi tengo mi server de redis)
+# config/settings.py
+from config.dictChannels import CHANNELS_AZURE, CHANNELS_LOCAL
+
+11. ponemos la configuracion en el mismo settings.py (en mi caso, lo puse debajo de la config del asgi)
+# config/settings.py
+CHANNEL_LAYERS = CHANNELS_LOCAL
+
+12. dentro de la app chat, creamos el archivo consumers.py, el cual administrara nuestro chat asincronico, ahi estan los mensajes de que hace cada cosa, en las notas profundizar
+# chat/consumers.py
+from channels.generic.websocket import AsyncWebsocketConsumer
+from channels.db import database_sync_to_async
+
+import json
+
+class ChatConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.room_name = self.scope['url_route']['kwargs']['room_name']
+        self.room_group_name = 'chat_%s' % self.room_name
+
+        # Unirse al grupo
+        await self.channel_layer.group_add(
+            self.room_group_name,
+            self.channel_name
+        )
+
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        # Salir del grupo
+        await self.channel_layer.group_discard(
+            self.room_group_name,
+            self.channel_name
+        )
+
+    # Recibir mensaje desde WebSocket
+    async def receive(self, text_data):
+        text_data_json = json.loads(text_data)
+        message = text_data_json['message']
+        user=text_data_json.get('user',None)
+
+        # Enviar mensaje al grupo
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'chat_message',
+                'message': message,
+                "user":user
+            }
+        )
+        # ejecuto con el await la funcion que cree
+        await self.post_message(text_data_json)
+
+    # Recibir mensaje desde el grupo
+    async def chat_message(self, event):
+        message = event['message']
+        user=event.get('user',None)
+
+        # Enviar mensaje a WebSocket
+        await self.send(text_data=json.dumps({
+            'message': message,
+            "user":user
+        }))
+    # convierte lo que este dentro sobre bd o rl orm, en operaciones asincronas
+    @database_sync_to_async
+    def post_message(self, data):
+        try:
+          from django.contrib.auth.models import User
+          from apps.chat.models import HistorialChat
+          user = User.objects.get(username=data['user'])
+          HistorialChat.objects.create(user=user,message=data['message'])
+        except Exception as e:
+            # si sale algun error, o el error de que no han cargado las aplicaciones, lo paso para que cargue todo normal
+            print(str(e))
+
+
+13. crear el archivo routing.py en la app chat tambien, impoertamos el re_path, y la clase de nuestro chat del consumers.py, explicar ese arreglo
+# chat/routing.py
+from django.urls import re_path
+from .consumers import ChatConsumer
+
+websocket_urlpatterns = [
+  re_path(r'ws/chat/(?P<room_name>\w+)/$', ChatConsumer.as_asgi()),
+]
+
+14. en el asgi.py de la carpeta configuracion ponemos lo siguiente, lo cual es la configuracion del servidor asincronico, explicar cada linea
+# config/asgi.py
+import os
+from channels.auth import AuthMiddlewareStack
+from channels.routing import ProtocolTypeRouter,URLRouter
+from django.core.asgi import get_asgi_application
+from chat.routing import websocket_urlpatterns
+
+
+settings_module = 'config.production' if 'WEBSITE_HOSTNAME' in os.environ else 'config.settings'
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', settings_module)
+
+application = ProtocolTypeRouter({
+    # si esta desplegado o no, pongo el protocolo
+    "https" if 'WEBSITE_HOSTNAME' in os.environ else "http": get_asgi_application(),
+    "websocket": AuthMiddlewareStack(
+        URLRouter(
+            websocket_urlpatterns
+        )
+    ),
+})
+
+15. Vamos a crear la vista basada en clase para el chat, explicar
+#chat/views.py
+from django.views.generic import TemplateView
+from django.utils.decorators import method_decorator
+from django.contrib.auth.decorators import login_required
+from .models import HistorialChat
+
+class InicioView(TemplateView):
+    template_name="chat.html"
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["room_name"] = "social"
+        historial=[]
+        historialDiasFechas=HistorialChat.diasRegistros()
+        for i in historialDiasFechas[0]:
+          # en la funcion diasRegistros, obtengo los registros, les modifico su datetime al que quiero, y retorno los dias sin repetirce y los registros modificados
+          #aqui en el for recorro los registros y luego pregunto si la fecha (yyyy-mm-dd) se encuenta en la fecha del objeto en cuestion y si lo esta, lo guarda, de lo contrario, no
+          registros=[j.toJSON() for j in historialDiasFechas[1] if str(i) in str(j.datetime.date())]
+          historial.append({"dia":i,"registros":registros})
+        context['historial']=historial
+        return context
+
+16. crear el html
+# templates/chat.html
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="d-flex justify-content-center">
+<div class="chat-container mt-5 col-12 col-sm-10 col-md-9">
+    <div class="chat-header">
+        <h2>Chat</h2>
+    </div>
+    <div class="chat-messages">
+      {% for date in historial %}
+        <div class="time-message text-center"><i>{{date.dia|date}}</i></div>
+        {% for msj in date.registros %}
+          <div class="message">
+            {% if msj.user.username == request.user.username %}
+            <div class="local" style="margin-left:auto; text">
+              <div class="d-flex flex-column">
+              <span class="align-self-end t-wordwrap">
+                {{msj.message}}
+              </span>
+              <small class="align-self-end">
+              {{msj.datetime_format}}
+              </small>
+              </div>
+            </div>
+            {% else %}
+            <div class="no-local" style="margin-right:auto;">
+              <strong style="display:block;">
+                {{msj.user.username|title}}
+              </strong>
+              <div class="d-flex flex-column">
+              <span class="align-self-start t-wordwrap">
+                {{msj.message}}
+              </span>
+              <small>
+             {{msj.datetime_format}}
+              </small>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      {% endfor %}
+      
+    </div>
+    <div class="chat-input">
+        <input  type="text" placeholder="Escribe un mensaje...">
+        <button type="button" >Enviar</button>
+    </div>
+</div>
+</div>
+{% endblock content %}
+
+{% block js %}
+    <!-- reconnecting websocket lib -->
+    <!-- Administra mejor las reconecciones del websocket -->
+    <script src="{% static 'libs/reconnecting-websocket/js/reconnecting-websocket.min.js' %}"></script>
+     <script>
+      // poner en mayuscula la primera letra de un string
+      function toTitle(str) {
+        return str.charAt(0).toUpperCase() + str.slice(1);
+      }
+      // Web sockect
+      var ws_scheme = window.location.protocol == "https:" ? "wss" : "ws";
+      
+        var chatSocket = new ReconnectingWebSocket(
+          ws_scheme + '://' + window.location.host +
+          '/ws/chat/{{ room_name }}/'
+          );
+      
+        
+      // Obtener referencia al contenedor de mensajes del chat
+    var chatMessages = document.querySelector('.chat-messages');
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    // Agregar un evento de mensaje recibido al WebSocket
+    chatSocket.onmessage = function(e) {
+        var data = JSON.parse(e.data);
+        var message = data['message'];
+        var user=null;
+        try{
+          user = data['user']
+        }catch (e){
+          console.error(e)
+          user=null;
+        }
+        if (user==null){
+          user="Anonimo"
+        }
+       
+        //obtengo el datetime actual
+        const c = new Date(); // Obtiene la fecha y hora actual
+        
+        //formateo la fecha para que salga como "2:25 PM"
+        let hours = c.getHours();
+        let minutes = c.getMinutes();
+        let ampm = hours >= 12 ? 'PM' : 'AM';
+
+        hours = hours % 12;
+        hours = hours ? hours : 12; // la hora '0' debería ser '12'
+        minutes = minutes < 10 ? '0'+minutes : minutes;
+
+        let timeFormat = hours + ':' + minutes + ' ' + ampm;
+
+        // Crear un elemento de mensaje y agregarlo al contenedor de mensajes
+        var messageElement = document.createElement('div');
+        messageElement.classList.add('message');
+        if (user=="{{request.user.username}}"){
+          messageElement.innerHTML = `<div class="local" style="margin-left:auto;">
+            <div class="d-flex flex-column">
+              <span class="align-self-end t-wordwrap">${message}</span>
+              <small class="align-self-end">${timeFormat}</small>
+            </div>
+          </div>`;
+        }else{
+          messageElement.innerHTML = `<div class="no-local" style="margin-right:auto;">
+            <strong style="display:block;">${toTitle(user)}</strong>
+            <div class="d-flex flex-column">
+              <span class="align-self-start t-wordwrap">${message}</span>
+              <small>${timeFormat}</small>
+            </div>
+          </div>`;
+        }
+
+        
+        chatMessages.appendChild(messageElement);
+
+        // Desplazarse hacia abajo para mostrar el mensaje más reciente
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    };
+    // Obtener referencias a los elementos del chat
+    var chatInput = document.querySelector('.chat-input input');
+    var sendButton = document.querySelector('.chat-input button');
+
+    // Agregar un evento de clic al botón de enviar
+    sendButton.addEventListener('click', function() {
+        var message = chatInput.value.trim();
+        if (message !== '') {
+            // Enviar el mensaje al WebSocket
+            chatSocket.send(JSON.stringify({
+                'message': message,
+                "user":"{{request.user.username}}"
+            }));
+
+            // Limpiar el campo de entrada del chat
+            chatInput.value = '';
+        }
+    });
+
+    // Agregar un evento de tecla presionada al campo de entrada del chat (Cuando le una enter)
+    chatInput.addEventListener('keypress', function(event) {
+        if (event.keyCode === 13 || event.which === 13) {
+            // Obtener el mensaje del campo de entrada
+            var message = chatInput.value.trim();
+            if (message !== '') {
+                // Enviar el mensaje al WebSocket
+                chatSocket.send(JSON.stringify({
+                    'message': message,
+                    "user":"{{request.user.username}}"
+                }));
+
+                // Limpiar el campo de entrada del chat
+                chatInput.value = '';
+            }
+        }
+    });
+    
+</script>
+
+
+{% endblock js %}
+
+17. estos son los estilos
+# static/css/styles.css
+.chat-container {
+    border-radius: 15px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    font-family: 'Arial', sans-serif;
+    background: #fafafa;
+    padding: 10px;
+}
+
+.chat-header {
+    text-align: center;
+    color: #6c757d;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.chat-messages {
+    height: 400px;
+    overflow-y: auto;
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+}
+
+.message {
+    margin-bottom: 10px;
+}
+
+.message .no-local, 
+.message .local {
+    color: #fff;
+    border-radius: 10px;
+    padding: 5px 10px;
+    width: max-content;
+    max-width: 80%;
+}
+.message .no-local{
+  background: gray;
+}
+
+.message .local{
+  background: #007bff;
+}
+
+.chat-input {
+    display: flex;
+    justify-content: space-between;
+    border-top: 1px solid #dee2e6;
+    padding-top: 10px;
+}
+
+.chat-input input {
+    width: 70%;
+    border: none;
+    padding: 5px;
+    border-radius: 10px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.1);
+}
+
+.chat-input button {
+    width: 25%;
+    border: none;
+    color: #fff;
+    background: #007bff;
+    border-radius: 10px;
+    padding: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.chat-input button:hover {
+    background: #0056b3;
+}
+
+.time-message{
+  margin: 10px 0;
+}
+
+.time-message i {
+  background-color: gray;
+  padding: 4px;
+  border-radius: 8px;
+  color:white;
+}
+
+.t-wordwrap {
+   word-wrap: break-word !important;
+   max-width: 100%;
+}
+
+18. utilizaremos esta libreria para administrar el websocket: https://cdnjs.cloudflare.com/ajax/libs/reconnecting-websocket/1.0.0/reconnecting-websocket.min.js
+la pueden importar o descargar en su proyecto
+
+19. creamos el urls.py de la app, y agregarla a la urls.py de la config, las dejo vacia pq estara el chat en la ruta principal
+# chat/urls.py
+from django.urls import path
+from .views import InicioView
+urlpatterns = [
+    path("",InicioView.as_view(),name="inicio")
+]
+
+19. agregarla al urls.py de la config
+# config/urls.py
+from django.contrib import admin
+from django.urls import path,include
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('',include('chat.urls')),
+]
+
+20. creamos un archivo llamado gunicorn_config.py al nivel del manage.py, ahi configuraremos lo de uvicorn para el servidor asincrono
+# gunicorn_config.py
+
+# Número de procesos de trabajo para manejar las solicitudes
+workers = 3
+
+# Clase de trabajador a utilizar
+worker_class = 'uvicorn.workers.UvicornWorker'
+
+# Host y puerto en los que se escucharán las solicitudes
+bind = '0.0.0.0:8000'
+
+# Nivel de registro (opcional)
+loglevel = 'info'
+
+# en configuracion de configuracion de la app, en general settings, EXPLICAR
+# gunicorn -c gunicorn_config.py config.asgi:application
+
+21. deberia funcionar, en las notas profundizar y ademas realizarlo todo, la config para despliegue o decirle que se va a configurar para despliegue en azure y le pongo el link de la nota, y ya encima de eso ponerse la vitsa del chat y las vistas del inicio de sesion y registro de usuario basico
+
+
