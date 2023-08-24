@@ -1,4 +1,4 @@
-1. instalar estos requerimientos (los que utilice yo), hacer la instalacion con pip install tal tal tal, y decir que channels sea la v 3
+1. instalar estos requerimientos (los que utilice yo), hacer la instalacion con pip install tal tal tal, y decir que channels sea la v 3 (crear 2 txt, uno de windows y otro para el despligue)
 asgiref==3.7.2
 async-timeout==4.0.3
 attrs==23.1.0
