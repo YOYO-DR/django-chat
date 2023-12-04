@@ -66,4 +66,4 @@ jobs:
         with:
           app-name: 'djangochat'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_BE7650F1E60A4C77BCEF7C2E302A84D4 }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_76E02C8C22094C0CAFBA41185ED5ACA7 }}
