@@ -9,7 +9,7 @@ CSRF_TRUSTED_ORIGINS = ['https://' + os.environ['WEBSITE_HOSTNAME']] if 'WEBSITE
 
 DEBUG = False
 
-CHANNEL_LAYERS = CHANNELS_AZURE
+CHANNEL_LAYERS = CHANNELS_LOCAL
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
